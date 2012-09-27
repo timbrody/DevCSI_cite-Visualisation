@@ -1,10 +1,9 @@
 var server = require("./server");
 var rewrite = require("./rewrite");
-var requestMetadata = require("./handlers/metadata");
-var requestCitations = require("./handlers/citations");
+var opencitations = require("./providers/opencitations");
 
 var handle = {};
-handle["/metadata"] = requestMetadata.handle;
-handle["/citations"] = requestCitations.handle;
+handle["^/opencitations\\.net/([^/]+)$"] = opencitations.metadata;
+handle["^/opencitations\\.net/([^/]+)/citations$"] = opencitations.citations;
 
 server.start(rewrite.rewrite, handle);
