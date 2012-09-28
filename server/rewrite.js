@@ -1,6 +1,6 @@
 var querystring = require("querystring");
 
-function rewrite(handle, pathname, response) {
+function rewrite(handle, pathname, query, response) {
 	console.log("Rewriting " + pathname);
 
 	for(var regexp in handle)
@@ -14,7 +14,7 @@ function rewrite(handle, pathname, response) {
 			{
 				parts[i] = querystring.unescape(parts[i]);
 			}
-			handle[regexp](parts, response);
+			handle[regexp](parts, query, response);
 			return;
 		}
 	}
