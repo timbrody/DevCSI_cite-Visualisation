@@ -5,7 +5,7 @@ var util = require("util");
 var baseurl = "http://opencitations.net/sparql/";
 
 var sparql = {
-	metadata: "SELECT ?article ?publicationData ?title ?pubMedId ?doi WHERE { ?article a <http://purl.org/spar/fabio/JournalArticle> FILTER (?article = <%s>) OPTIONAL { ?article prism:publicationDate ?publicationDate .  ?article dcterms:title ?title .  ?article fabio:hasPubMedId ?pubMedId .  ?article prism:doi ?doi } } LIMIT 1",
+	metadata: "SELECT ?article ?publicationDate ?title ?pubMedId ?doi WHERE { ?article a <http://purl.org/spar/fabio/JournalArticle> FILTER (?article = <%s>) OPTIONAL { ?article prism:publicationDate ?publicationDate .  ?article dcterms:title ?title .  ?article fabio:hasPubMedId ?pubMedId .  ?article prism:doi ?doi } } LIMIT 1",
 	citations: "SELECT ?article ?publicationDate ?title ?pubMedId ?doi WHERE { ?article cito:cites <%s> OPTIONAL { ?article prism:publicationDate ?publicationDate .  ?article dcterms:title ?title .  ?article fabio:hasPubMedId ?pubMedId .  ?article prism:doi ?doi } } LIMIT 2000"
 };
 
@@ -76,6 +76,8 @@ function convert(input) {
 		output.data.pubMedId = input.pubMedId.value;
 	if (input.doi)
 		output.data.doi = input.doi.value;
+	if (input.publicationDate)
+		output.data.publicationDate = input.publicationDate.value;
 
 	return output;
 }
