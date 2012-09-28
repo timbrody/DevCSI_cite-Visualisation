@@ -5,41 +5,58 @@ var util = require("util");
 var baseurl = "http://opencitations.net/sparql/";
 
 var sparql = {
-	metadata: " ",
-	citations: "SELECT ?article ?publicationData ?title ?pubMedId ?doi WHERE { ?article cito:cites <%s> OPTIONAL { ?article prism:publicationDate ?publicationDate .  ?article dcterms:title ?title .  ?article fabio:hasPubMedId ?pubMedId .  ?article prism:doi ?doi } } LIMIT 2000"
+	metadata: "SELECT ?article ?publicationData ?title ?pubMedId ?doi WHERE { ?article a <http://purl.org/spar/fabio/JournalArticle> FILTER (?article = <%s>) OPTIONAL { ?article prism:publicationDate ?publicationDate .  ?article dcterms:title ?title .  ?article fabio:hasPubMedId ?pubMedId .  ?article prism:doi ?doi } } LIMIT 1",
+	citations: "SELECT ?article ?publicationDate ?title ?pubMedId ?doi WHERE { ?article cito:cites <%s> OPTIONAL { ?article prism:publicationDate ?publicationDate .  ?article dcterms:title ?title .  ?article fabio:hasPubMedId ?pubMedId .  ?article prism:doi ?doi } } LIMIT 2000"
 };
 
 function nodeinfo(parts, query, response) {
-	var id = parts[1];
-	var _url = url.parse(baseurl);
-	_url["query"] = {
-		"query": util.format(sparql.citations, id),
-		"format": "srj",
-		"common_prefixes": "on"
-	};
-	console.log(query.jsonp);
 	response.writeHeader(200, {
-		"Content-Type": "application/json"
+		"Content-Type": "application/json; charset=utf-8"
 	});
 	if (query.jsonp) {
 		response.write(query.jsonp + "(");
 	}
-	retrieve(_url, function(data) {
+
+	var id = parts[1];
+
+	var metadataf = function() {
+		var _url = url.parse(baseurl);
+		_url["query"] = {
+			"query": util.format(sparql.metadata, id),
+			"format": "srj",
+			"common_prefixes": "on"
+		};
+		return _url;
+	};
+	var citationsf = function() {
+		var _url = url.parse(baseurl);
+		_url["query"] = {
+			"query": util.format(sparql.citations, id),
+			"format": "srj",
+			"common_prefixes": "on"
+		};
+		return _url;
+	};
+	retrieve(metadataf(), function(data) {
 		var input = JSON.parse(data);
-		var root = convert({});
-		var children = input.results.bindings;
-		for(var i = 0; i < children.length; ++i)
-		{
-			var node = convert(children[i]);
-			node.children = undefined;
-			root.children.push(node);
-		}
-//		response.write(JSON.stringify(input, undefined, 4));
-		response.write(JSON.stringify(root, undefined, 4));
-		if (query.jsonp) {
-			response.write(");");
-		}
-		response.end();
+		var root = convert(input.results.bindings[0]);
+		console.log(JSON.stringify(input, undefined, 4));
+		retrieve(citationsf(), function(data) {
+			var input = JSON.parse(data);
+			var children = input.results.bindings;
+			for(var i = 0; i < children.length; ++i)
+			{
+				var node = convert(children[i]);
+				node.children = undefined;
+				root.children.push(node);
+			}
+			console.log(JSON.stringify(input, undefined, 4));
+			response.write(JSON.stringify(root, undefined, 4));
+			if (query.jsonp) {
+				response.write(");");
+			}
+			response.end();
+		});
 	});
 }
 
